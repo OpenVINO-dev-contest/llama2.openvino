@@ -26,19 +26,19 @@ pip install -r requirements.txt
 **1. Run [Optimum-Intel OpenVINO pipeline](https://huggingface.co/docs/optimum/intel/inference) and export the IR model**
 
 ```
-    $python3 export_ir.py -m 'meta-llama/Llama-2-7b-hf' -o './ir_model'
-    cd ir_pipeline
-    python3 generate_op.py -m "meta-llama/Llama-2-7b-hf" -p "what is openvino ?" -d "CPU"
+python3 export_ir.py -m 'meta-llama/Llama-2-7b-hf' -o './ir_model'
+cd ir_pipeline
+python3 generate_op.py -m "meta-llama/Llama-2-7b-hf" -p "what is openvino?" -d "CPU"
 ``` 
 
 **2. (Optional) Run restructured pipeline**:
 ```
-    python3 generate_ir.py -m "meta-llama/Llama-2-7b-hf" -p "what is openvino ?" -d "CPU"
+    python3 generate_ir.py -m "meta-llama/Llama-2-7b-hf" -p "what is openvino?" -d "CPU"
 ```
 
 
 ## Deployment Method 2: ONNX pipeline, export ONNX model from HF Optimum
-- Please notice the step below will leadd large memory consumption, you have make sure your server should be with >256GB RAM
+- Please notice the step below will lead to large memory consumption, you have to make sure your server should be with >256GB RAM for this step.
 
 **1. Export the ONNX model from HuggingFace Optimum and convert it to OpenVINO IR**:
 
