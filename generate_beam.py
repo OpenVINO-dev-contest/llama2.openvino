@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import time
 
-beam_width = 4
+beam_width = 2
 num_hypotheses = 1
 
 class Node(object):
@@ -15,7 +15,8 @@ class Node(object):
         self.state = state if state is not None else None # recurrent layer hidden state
         self.cum_cost = parent.cum_cost + cost if parent else cost # e.g. -log(p) of sequence up to current node (including)
         self.length = 1 if parent is None else parent.length + 1
-
+        self._sequence = None
+        
     def to_sequence(self):
         # Return sequence of nodes from root to current node.
         if not self._sequence:
@@ -27,7 +28,7 @@ class Node(object):
         return self._sequence
 
     def to_sequence_of_values(self):
-        return [s.value for s in self.to_sequence()]
+        return [s.value[0][0] for s in self.to_sequence()]
 
 
 
@@ -57,11 +58,12 @@ def generate_sequence(input_ids, attention_mask, eos_token_id,
     first = True
     count = 0
     hypotheses = []
+    total_len = len(input_ids[0])
     for _ in range(max_sequence_length):
 
         fringe = []
         for n in next_fringe:
-            if n.value[0][-1] == eos_token_id:
+            if n.value[0][-1] == eos_token_id or total_len == max_sequence_length:
                 hypotheses.append(n)
             else:
                 fringe.append(n)
@@ -74,16 +76,14 @@ def generate_sequence(input_ids, attention_mask, eos_token_id,
                 past_key_values.append(np.concatenate([n.state[i] for n in fringe]))
             cur_input_len = 1
             total_len += 1 
+            attention_mask = np.ones((len(fringe), total_len))
         else:
             cur_input_len = len(input_ids[0])
-            total_len = len(input_ids[0])
         first = False
         inputs = dict(zip(key_value_input_names,past_key_values)) 
         inputs["input_ids"] = np.concatenate([n.value for n in fringe])
+        inputs["attention_mask"] = attention_mask
         
-        
-        if "attention_mask" in input_names and attention_mask is not None:
-            inputs["attention_mask"] = attention_mask
         request.start_async(inputs, shared_memory=True)
         request.wait()
         count += 1
@@ -98,20 +98,17 @@ def generate_sequence(input_ids, attention_mask, eos_token_id,
         Y_t = np.argsort(next_token_scores, axis=1)[:,-beam_width:]
         i=0
         next_fringe = []
-        for Y_t_n, p_t_n, n in zip(Y_t, next_token_scores,  fringe):
+        for Y_t_n, p_t_n, n in zip(Y_t, next_token_scores, fringe):
             
             Y_nll_t_n = -np.log(p_t_n[Y_t_n])
 
             for y_t_n, y_nll_t_n in zip(Y_t_n, Y_nll_t_n):
-                n_new = Node(parent=n,  state=[state for state in present_key_values], value=[[y_t_n]], cost=y_nll_t_n)
+                n_new = Node(parent=n,  state=[[state[i]] for state in present_key_values], value=[[y_t_n]], cost=y_nll_t_n)
                 next_fringe.append(n_new)
             i += 1
         next_fringe = sorted(next_fringe, key=lambda n: n.cum_cost)[:beam_width] # may move this into loop to save memory
-
-    
-        attention_mask = np.ones((len(next_fringe)-1,total_len))
     hypotheses.sort(key=lambda n: n.cum_cost)
-    return hypotheses[:num_hypotheses].to_sequence_of_values()
+    return hypotheses[:num_hypotheses]
 
 
 if __name__ == "__main__":
@@ -188,9 +185,10 @@ if __name__ == "__main__":
     end = time.perf_counter()
     output_text = " "
     # Convert IDs to words and make the sentence from it
-    
-    print(" --- text decoding --- ")
-    output_text = tokenizer.batch_decode(output_ids,
-                                         skip_special_tokens=True,
-                                         clean_up_tokenization_spaces=False)[0]
-    print(f"Response: {output_text}")
+    for output in output_ids:
+        print(" --- text decoding --- ")
+        output_id = output.to_sequence_of_values()
+        output_text = tokenizer.batch_decode(output_id,
+                                            skip_special_tokens=True,
+                                            clean_up_tokenization_spaces=False)[0]
+        print(f"Response: {output_text}")
