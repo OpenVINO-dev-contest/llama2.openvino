@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import time
 
-beam_width = 2
+beam_width = 4
 num_hypotheses = 1
 
 class Node(object):
@@ -28,7 +28,7 @@ class Node(object):
         return self._sequence
 
     def to_sequence_of_values(self):
-        return [s.value[0][0] for s in self.to_sequence()]
+        return [[s.value[0][0] for s in self.to_sequence()]]
 
 
 
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     # Convert IDs to words and make the sentence from it
     for output in output_ids:
         print(" --- text decoding --- ")
-        output_id = output.to_sequence_of_values()
+        output_id = np.array(output.to_sequence_of_values())
         output_text = tokenizer.batch_decode(output_id,
                                             skip_special_tokens=True,
                                             clean_up_tokenization_spaces=False)[0]
