@@ -5,7 +5,7 @@ import argparse
 import time
 
 beam_width = 4
-num_hypotheses = 1
+num_hypotheses = 4
 
 class Node(object):
     def __init__(self, parent, state, value, cost):
@@ -28,7 +28,7 @@ class Node(object):
         return self._sequence
 
     def to_sequence_of_values(self):
-        return [[s.value[0][0] for s in self.to_sequence()]]
+        return [[s.value[0][0] for s in self.to_sequence()[1:]]]
 
 
 
@@ -63,7 +63,7 @@ def generate_sequence(input_ids, attention_mask, eos_token_id,
 
         fringe = []
         for n in next_fringe:
-            if n.value[0][-1] == eos_token_id or total_len == max_sequence_length:
+            if n.value[0][-1] == eos_token_id or total_len==max_sequence_length:
                 hypotheses.append(n)
             else:
                 fringe.append(n)
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     parser.add_argument('-p',
                         '--prompt',
                         required=False,
-                        default="what is openvino ?",
+                        default="How to become healthy ?",
                         type=str,
                         help='Required. prompt sentence')
     parser.add_argument('-l',
