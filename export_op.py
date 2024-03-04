@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument('-o',
                         '--output',
                         required=False,
-                        default="./ir_model",
+                        default="./fp16_model",
                         type=str,
                         help='Required. path to save the ir model')
     args = parser.parse_args()
@@ -34,5 +34,6 @@ if __name__ == "__main__":
     ov_model.save_pretrained(model_path)
 
     print(" --- exporting tokenizer --- ")
-    tokenizer = AutoTokenizer.from_pretrained(args.model_id)
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model_id)
     tokenizer.save_pretrained(model_path)

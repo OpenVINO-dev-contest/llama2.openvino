@@ -2,13 +2,14 @@
 numpy
 streamlit
 streamlit-chat
-openvino>=2023.3.0
-nncf>=2.7
 sentencepiece
 gradio
 auto_gptq
-onnx>=1.11.0
 onnxruntime
-torch==2.0.1
-transformers>=4.33.0
-git+https://github.com/huggingface/optimum-intel.git
+nncf>=2.8.1
+optimum-intel>=1.15.2
+transformers>=4.37.2
+# openvino-nightly
+openvino>=2023.3.0
+onnx>=1.15.0
+huggingface-hub>=0.21.3
